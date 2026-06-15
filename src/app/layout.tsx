@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Suppress TypeScript error for side-effect CSS import when no declaration file is present
+// @ts-ignore
 import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 

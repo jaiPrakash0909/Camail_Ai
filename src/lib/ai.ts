@@ -40,10 +40,56 @@ export const aiCommandSchema = z.object({
 export type AiCommand = z.infer<typeof aiCommandSchema>;
 export type AiAction = z.infer<typeof aiActionSchema>;
 
-const systemPrompt = `You are Corsair Agent AI. Convert the user's request into strict JSON only.
-Return {"actions":[...]}.
-Use ISO datetimes with timezone when scheduling. For missing email subject/body, create concise professional text.
-Supported action types: send_email, create_event, update_event, delete_event, search.`;
+
+// **
+const systemPrompt = `
+You are Corsair Agent AI.
+
+Return VALID JSON ONLY.
+
+For send_email use:
+
+{
+  "type":"send_email",
+  "to":"user@example.com",
+  "subject":"...",
+  "body":"..."
+}
+
+For create_event use:
+
+{
+  "type":"create_event",
+  "title":"...",
+  "description":"...",
+  "startTime":"ISO_DATE",
+  "endTime":"ISO_DATE",
+  "guests":[]
+}
+
+NEVER use:
+summary
+subject
+start_time
+end_time
+attendees
+
+Use ONLY the exact field names defined above.
+
+Return:
+{"actions":[...]}
+`;
+
+//v****
+
+// const systemPrompt = `You are Corsair Agent AI. Convert the user's request into strict JSON only.
+// Return {"actions":[...]}.
+// Use ISO datetimes with timezone when scheduling. For missing email subject/body, create concise professional text.
+// Supported action types: send_email, create_event, update_event, delete_event, search.`;
+
+// ****
+
+
 
 async function callOpenAI(prompt: string) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -92,9 +138,25 @@ async function callGemini(prompt: string) {
     }
   );
 
-  if (!response.ok) {
-    throw new Error(`Gemini request failed with ${response.status}`);
-  }
+
+  //*** */
+
+if (!response.ok) {
+  const errorText = await response.text();
+
+  console.log("===== GEMINI ERROR =====");
+  console.log(errorText);
+  console.log("========================");
+
+  throw new Error(`Gemini request failed with ${response.status}`);
+}
+// *****
+  // if (!response.ok) {
+  //   throw new Error(`Gemini request failed with ${response.status}`);
+  // }
+
+// ***
+
 
   const data = (await response.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -103,12 +165,73 @@ async function callGemini(prompt: string) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
+// ****
 export async function parseCommand(prompt: string): Promise<AiCommand> {
   const provider = process.env.AI_PROVIDER ?? "openai";
-  const raw = provider === "gemini" ? await callGemini(prompt) : await callOpenAI(prompt);
-  const parsed = JSON.parse(raw);
-  return aiCommandSchema.parse(parsed);
+
+  const raw = provider === "gemini"
+    ? await callGemini(prompt)
+    : await callOpenAI(prompt);
+
+  console.log("========== AI RAW RESPONSE ==========");
+  console.log(raw);
+  console.log("====================================");
+
+
+  // ***
+const parsed = JSON.parse(raw);
+
+for (const action of parsed.actions ?? []) {
+
+  if (action.type === "create_event") {
+    action.title =
+      action.title ??
+      action.summary ??
+      action.subject;
+
+    action.startTime =
+      action.startTime ??
+      action.start_time;
+
+    action.endTime =
+      action.endTime ??
+      action.end_time;
+
+    action.guests =
+      action.guests ??
+      action.attendees ??
+      [];
+  }
+
+  if (action.type === "send_email") {
+    if (Array.isArray(action.to)) {
+      action.to = action.to[0];
+    }
+  }
 }
+
+return aiCommandSchema.parse(parsed);
+  // **
+  // const parsed = JSON.parse(raw);
+
+  // return aiCommandSchema.parse(parsed);
+
+  //** */
+}
+
+// ****
+// export async function parseCommand(prompt: string): Promise<AiCommand> {
+//   const provider = process.env.AI_PROVIDER ?? "openai";
+
+//   const raw = provider === "gemini" ? await callGemini(prompt) : await callOpenAI(prompt);
+//   const parsed = JSON.parse(raw);
+//   return aiCommandSchema.parse(parsed);
+// }
+// ***
+
+
+
+
 
 export async function summarizeEmail(body: string): Promise<string> {
   if (body.length < 700) {

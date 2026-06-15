@@ -1,8 +1,11 @@
+import { convert } from "html-to-text";
 import { EmailPriority } from "@prisma/client";
 import { ensureCorsairTenantSetup, getCorsairTenant } from "@/lib/corsair";
 import { classifyEmail, summarizeEmail } from "@/lib/ai";
 import { emailRepository } from "@/repositories/email.repository";
 import { pickText, runFirstAvailable } from "@/services/corsair-runner";
+
+
 
 const messageListPaths = [
   ["gmail", "api", "messages", "list"]
@@ -84,10 +87,57 @@ export const gmailService = {
     return Promise.all(
       messages.map(async (message: any) => {
         const data = await getFullMessage(tenant as any, message);
-        const body = pickText(data, ["body", "text", "plainText"]) || extractBody(data.payload) || pickText(data, ["snippet"]);
+// ***
+const rawBody =
+  pickText(data, ["body", "text", "plainText"]) ||
+  extractBody(data.payload) ||
+  pickText(data, ["snippet"]);
+
+const body = convert(rawBody, {
+  wordwrap: false,
+  selectors: [
+    { selector: "img", format: "skip" },
+    { selector: "a", options: { ignoreHref: true } }
+  ]
+});
+
+
+// ***
+        // const body = pickText(data, ["body", "text", "plainText"]) || extractBody(data.payload) || pickText(data, ["snippet"]);
+// ***
         const subject = pickText(data, ["subject"]) || getHeader(data, "Subject") || "(No subject)";
-        const priority = (await classifyEmail(body, subject)) as EmailPriority;
-        const summary = body.length > 700 ? await summarizeEmail(body) : undefined;
+
+// *******
+
+
+        let priority: EmailPriority = "NORMAL";
+
+try {
+  priority = (await classifyEmail(
+    body,
+    subject
+  )) as EmailPriority;
+} catch (error) {
+  console.error("Priority classification failed:", error);
+}
+
+let summary: string | undefined;
+
+try {
+  summary =
+    body.length > 700
+      ? await summarizeEmail(body)
+      : undefined;
+} catch (error) {
+  console.error("Email summary failed:", error);
+}
+
+
+// ***
+        // const priority = (await classifyEmail(body, subject)) as EmailPriority;
+        // const summary = body.length > 700 ? await summarizeEmail(body) : undefined;
+// ***
+
 
         return emailRepository.upsertFromCorsair({
           userId,
@@ -103,10 +153,19 @@ export const gmailService = {
       })
     );
   },
-  async listEmails(userId: string, input?: { query?: string; priority?: EmailPriority }) {
-    await this.syncEmails(userId, input?.query ?? "");
-    return emailRepository.list(userId, input);
-  },
+
+
+async listEmails(userId: string, input?: { query?: string; priority?: EmailPriority }) {
+  return emailRepository.list(userId, input);
+},
+// ****
+  // async listEmails(userId: string, input?: { query?: string; priority?: EmailPriority }) {
+  //   await this.syncEmails(userId, input?.query ?? "");
+  //   return emailRepository.list(userId, input);
+  // },
+// ***
+
+
   async getEmail(userId: string, id: string) {
     const email = await emailRepository.get(userId, id);
     if (!email) {

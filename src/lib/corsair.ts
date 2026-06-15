@@ -53,27 +53,35 @@ function getSetupCredentials() {
   };
 }
 
+
 export async function ensureCorsairTenantSetup(userId: string) {
-  const existing = setupPromises.get(userId);
-  if (existing) {
-    return existing;
-  }
-
-
-//
-const setupPromise = setupCorsair(corsair, {
-  tenantId: userId
-}).then(() => undefined);
-
-
-  // const setupPromise = setupCorsair(corsair, {
-  //   tenantId: userId,
-  //   credentials: getSetupCredentials()
-  // }).then(() => undefined);
-
-  setupPromises.set(userId, setupPromise);
-  return setupPromise;
+  return;
 }
+
+
+
+
+// export async function ensureCorsairTenantSetup(userId: string) {
+//   const existing = setupPromises.get(userId);
+//   if (existing) {
+//     return existing;
+//   }
+
+
+// //
+// const setupPromise = setupCorsair(corsair, {
+//   tenantId: userId
+// }).then(() => undefined);
+
+
+//   // const setupPromise = setupCorsair(corsair, {
+//   //   tenantId: userId,
+//   //   credentials: getSetupCredentials()
+//   // }).then(() => undefined);
+
+//   setupPromises.set(userId, setupPromise);
+//   return setupPromise;
+// }
 
 export function getCorsairTenant(userId: string) {
   return corsair.withTenant(userId);
