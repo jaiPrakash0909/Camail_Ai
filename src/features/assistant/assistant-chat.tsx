@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Mail, Calendar, Inbox } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,63 +19,217 @@ export function AssistantChat() {
 
   async function send() {
     if (!prompt.trim()) return;
+
     const current = prompt;
-    setMessages((items) => [...items, { role: "user", content: current }]);
-    setPrompt("");
-    setIsSending(true);
-    const response = await fetch("/api/ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: current })
-    });
-    const body = await response.json();
-    setIsSending(false);
-    if (!response.ok) {
-      toast.error(body.error ?? "Assistant failed");
-      return;
-    }
+
     setMessages((items) => [
       ...items,
       {
-        role: "assistant",
-        content: `Executed ${body.command.actions.length} action${body.command.actions.length === 1 ? "" : "s"}.`
-      }
+        role: "user",
+        content: current,
+      },
     ]);
+
+    setPrompt("");
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: current,
+        }),
+      });
+
+      const body = await response.json();
+
+      if (!response.ok) {
+        toast.error(body.error ?? "Assistant failed");
+        return;
+      }
+
+      setMessages((items) => [
+        ...items,
+        {
+          role: "assistant",
+          content:
+            body.message ??
+            `Executed ${body.command?.actions?.length ?? 0} action(s).`,
+        },
+      ]);
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-foreground">
-          <Sparkles className="h-5 w-5" />
+    <div className="flex h-[calc(100vh-120px)] flex-col">
+      {/* Header */}
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <Sparkles className="h-6 w-6" />
         </div>
+
         <div>
-          <h1 className="text-2xl font-semibold">AI Assistant</h1>
-          <p className="text-sm text-muted-foreground">Send follow-ups, schedule meetings, and adjust events through Corsair.</p>
+          <h1 className="text-3xl font-bold">
+            MailPilot AI
+          </h1>
+
+          <p className="text-sm text-muted-foreground">
+            Your email and calendar copilot
+          </p>
         </div>
       </div>
-      <Card className="min-h-[440px] p-4">
-        <div className="space-y-3">
-          {messages.map((message, index) => (
-            <div key={index} className={message.role === "user" ? "ml-auto max-w-[80%] rounded-lg bg-primary p-3 text-primary-foreground" : "max-w-[80%] rounded-lg bg-muted p-3"}>
-              {message.content}
+
+      {/* Chat Area */}
+      <Card className="flex-1 overflow-hidden rounded-3xl border">
+        <div className="flex h-full flex-col">
+          <div className="flex-1 overflow-y-auto p-6">
+            {!messages.length ? (
+              <div className="flex h-full flex-col items-center justify-center">
+                <h2 className="mb-3 text-4xl font-bold">
+                  Good Evening 👋
+                </h2>
+
+                <p className="mb-10 text-muted-foreground">
+                  What would you like to do today?
+                </p>
+
+                <div className="grid w-full max-w-5xl gap-4 md:grid-cols-2">
+                  <button
+                    onClick={() =>
+                      setPrompt("Draft a professional email")
+                    }
+                    className="rounded-2xl border p-5 text-left transition hover:bg-muted"
+                  >
+                    <Mail className="mb-3 h-5 w-5" />
+                    <div className="font-medium">
+                      Draft Email
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Create professional emails
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setPrompt(
+                        "Schedule a meeting tomorrow"
+                      )
+                    }
+                    className="rounded-2xl border p-5 text-left transition hover:bg-muted"
+                  >
+                    <Calendar className="mb-3 h-5 w-5" />
+                    <div className="font-medium">
+                      Schedule Meeting
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Create calendar events
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setPrompt(
+                        "Show important emails"
+                      )
+                    }
+                    className="rounded-2xl border p-5 text-left transition hover:bg-muted"
+                  >
+                    <Inbox className="mb-3 h-5 w-5" />
+                    <div className="font-medium">
+                      Important Emails
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Find priority emails
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setPrompt("Summarize my inbox")
+                    }
+                    className="rounded-2xl border p-5 text-left transition hover:bg-muted"
+                  >
+                    <Sparkles className="mb-3 h-5 w-5" />
+                    <div className="font-medium">
+                      Summarize Inbox
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      AI inbox summary
+                    </div>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      message.role === "user"
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-3xl px-5 py-4 ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="border-t p-4">
+            <div className="flex gap-3">
+              <Textarea
+                value={prompt}
+                onChange={(e) =>
+                  setPrompt(e.target.value)
+                }
+                placeholder="Ask MailPilot anything..."
+                className="min-h-[80px] resize-none"
+              />
+
+              <Button
+                onClick={send}
+                disabled={isSending}
+                className="h-[80px] w-[80px] rounded-2xl"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
             </div>
-          ))}
-          {!messages.length ? (
-            <div className="grid gap-2 text-sm text-muted-foreground">
-              <button onClick={() => setPrompt("Send a follow-up email to Rahul.")} className="rounded-md border p-3 text-left hover:bg-muted">Send a follow-up email to Rahul.</button>
-              <button onClick={() => setPrompt("Schedule a client meeting next Friday.")} className="rounded-md border p-3 text-left hover:bg-muted">Schedule a client meeting next Friday.</button>
-              <button onClick={() => setPrompt("Move tomorrow's meeting to 4 PM.")} className="rounded-md border p-3 text-left hover:bg-muted">Move tomorrow's meeting to 4 PM.</button>
-            </div>
-          ) : null}
+          </div>
         </div>
       </Card>
-      <div className="flex gap-3">
-        <Textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ask Corsair Agent to act..." className="min-h-20" />
-        <Button onClick={send} disabled={isSending} className="h-20 w-20" size="icon">
-          <Send className="h-5 w-5" />
-        </Button>
-      </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
