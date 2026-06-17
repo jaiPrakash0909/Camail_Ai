@@ -9,8 +9,19 @@ import { detectIntent } from "@/services/intent.service";
 
 async function executeAction(userId: string, action: AiAction) {
   if (action.type === "send_email") {
-    return gmailService.sendEmail(userId, action);
+  if (!action.to) {
+    return {
+      needInput: true,
+      message: "What is the recipient's email address?"
+    };
   }
+
+  return gmailService.sendEmail(userId, {
+    to: action.to,
+    subject: action.subject,
+    body: action.body
+  });
+}
   if (action.type === "create_event") {
     return calendarService.createEvent(userId, action);
   }
@@ -44,14 +55,39 @@ export const aiService = {
 
   const command = await parseCommand(prompt);
 
-  const results = [];
+  console.log("COMMAND =====");
+console.log(JSON.stringify(command, null, 2));
+console.log("=============");
 
-  for (const action of command.actions) {
-    results.push({
-      action,
-      result: await executeAction(userId, action),
-    });
+
+
+  // const results = [];
+
+  // for (const action of command.actions) {
+  //   results.push({
+  //     action,
+  //     result: await executeAction(userId, action),
+  //   });
+  // }
+
+
+const results = [];
+
+for (const action of command.actions) {
+  const result = await executeAction(userId, action);
+
+  if ((result as any)?.needInput) {
+    return {
+      message: (result as any).message,
+    };
   }
+
+  results.push({
+    action,
+    result,
+  });
+}
+
 
   const saved = await commandRepository.create({
     userId,
@@ -62,12 +98,21 @@ export const aiService = {
     },
   });
 
-  return {
-    message: `Executed ${command.actions.length} action(s).`,
-    command,
-    results,
-    historyId: saved.id,
-  };
+  // return {
+  //   message: `Executed ${command.actions.length} action(s).`,
+  //   command,
+  //   results,
+  //   historyId: saved.id,
+  // };
+
+
+return {
+  message: "Action completed successfully.",
+  command,
+  results,
+  historyId: saved.id,
+};
+
 }
   // async runCommand(userId: string, prompt: string) {
   //   const command = await parseCommand(prompt);
