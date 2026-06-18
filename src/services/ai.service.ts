@@ -38,6 +38,33 @@ export const aiService = {
   async runCommand(userId: string, prompt: string) {
   const intent = detectIntent(prompt);
 
+  
+
+if (intent === "search") {
+  const query = prompt
+  .replace("show emails", "")
+  .replace("find emails", "")
+  .replace("search emails", "")
+  .trim();
+
+const result = await searchService.global(
+  userId,
+  query
+);
+
+   return {
+    message: "Search completed",
+    searchResults: result,
+  };
+
+
+  // return {
+  //   message: `Found ${result.emails.length} emails and ${result.events.length} events.`,
+  //   searchResults: result,
+  // };
+}
+
+
   if (intent === "chat") {
     const message = await chatService.chat(prompt);
 
@@ -51,6 +78,7 @@ export const aiService = {
       message,
       historyId: saved.id,
     };
+    
   }
 
   const command = await parseCommand(prompt);
@@ -114,6 +142,13 @@ return {
 };
 
 }
+
+
+
+
+
+
+
   // async runCommand(userId: string, prompt: string) {
   //   const command = await parseCommand(prompt);
   //   const results = [];

@@ -12,7 +12,11 @@ export function DashboardSidebar() {
   useEffect(() => {
     fetch("/api/dashboard")
       .then((r) => r.json())
-      .then(setData);
+      .then((result) => {
+      console.log("DASHBOARD DATA");
+      console.log(result);
+      setData(result);
+    });
   }, []);
 
   return (
@@ -28,7 +32,7 @@ export function DashboardSidebar() {
         </div>
 
         <div className="space-y-3">
-          {data.events.length === 0 ? (
+          {(data?.events?.length ?? 0) === 0 ? (
             <p className="text-sm text-zinc-500">
               No events today
             </p>
@@ -72,7 +76,7 @@ export function DashboardSidebar() {
               No important emails
             </p>
           ) : (
-            data.emails.map((email: any) => (
+            data?.emails?.map((email: any) => (
               <div
                 key={email.id}
                 className="rounded-xl bg-zinc-900 p-3"

@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
 export const dashboardRepository = {
-  async importantEmails(userId: string) {
+  importantEmails(userId: string) {
     return prisma.email.findMany({
       where: {
         userId,
+        archived: false,
         OR: [
           { priority: "URGENT" },
           { priority: "IMPORTANT" }
@@ -17,7 +18,7 @@ export const dashboardRepository = {
     });
   },
 
-  async todayEvents(userId: string) {
+  todayEvents(userId: string) {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 

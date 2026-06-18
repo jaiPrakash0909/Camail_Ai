@@ -16,6 +16,7 @@ export function AssistantChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [summary, setSummary] = useState("");
 
   async function send() {
     if (!prompt.trim()) return;
@@ -51,15 +52,33 @@ export function AssistantChat() {
         return;
       }
 
-      setMessages((items) => [
-        ...items,
-        {
-          role: "assistant",
-          content:
-            body.message ??
-            `Executed ${body.command?.actions?.length ?? 0} action(s).`,
-        },
-      ]);
+      let content =
+  body.message ??
+  `Executed ${body.command?.actions?.length ?? 0} action(s).`;
+
+if (body.searchResults) {
+  const emails = body.searchResults.emails ?? [];
+  const events = body.searchResults.events ?? [];
+
+  content =
+    `Found ${emails.length} emails and ${events.length} events\n\n`;
+
+  emails.slice(0, 5).forEach((email: any) => {
+    content += `📧 ${email.subject}\n`;
+  });
+
+  events.slice(0, 5).forEach((event: any) => {
+    content += `📅 ${event.title}\n`;
+  });
+}
+
+setMessages((items) => [
+  ...items,
+  {
+    role: "assistant",
+    content,
+  },
+]);
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -151,9 +170,21 @@ export function AssistantChat() {
                   </button>
 
                   <button
-                    onClick={() =>
-                      setPrompt("Summarize my inbox")
-                    }
+                    onClick={async () => {
+  const res = await fetch(
+    "/api/inbox-summary"
+  );
+
+  const data = await res.json();
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      role: "assistant",
+      content: data.summary,
+    },
+  ]);
+}}
                     className="rounded-2xl border p-5 text-left transition hover:bg-muted"
                   >
                     <Sparkles className="mb-3 h-5 w-5" />
@@ -184,7 +215,9 @@ export function AssistantChat() {
                           : "bg-muted"
                       }`}
                     >
-                      {message.content}
+                      <div className="whitespace-pre-wrap">
+  {message.content}
+</div>
                     </div>
                   </div>
                 ))}

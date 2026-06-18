@@ -1,6 +1,7 @@
 import { DashboardSidebar } from "@/features/dashboard/dashboard-sidebar";
 import { AssistantChat } from "@/features/assistant/assistant-chat";
 import { CalendarDays, Mail, Plus } from "lucide-react";
+import { ImportantEmails } from "@/features/dashboard/important-emails";
 
 export default function AssistantPage() {
   return (
@@ -10,26 +11,11 @@ export default function AssistantPage() {
 
       {/* Right Sidebar */}
 
-
-      <DashboardSidebar />
-
-      
+<DashboardSidebar />
 
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -48,7 +48,8 @@ if (!session?.user?.id) {
 redirect("/login");
 }
 
-return ( <div className="flex min-h-screen bg-black text-white"> <aside className="hidden w-72 border-r border-zinc-800 bg-zinc-950 lg:flex lg:flex-col"> <div className="p-6"> <div className="flex items-center gap-3"> <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#127173] font-bold">
+return ( <div className="flex h-screen bg-black text-white overflow-hidden">
+  <aside className="hidden h-screen w-64 border-r border-zinc-800 bg-zinc-950 lg:flex lg:flex-col"> <div className="p-6"> <div className="flex items-center gap-3"> <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#127173] font-bold">
 C </div>
 
 
@@ -62,21 +63,25 @@ C </div>
         </div>
       </div>
 
-      <Button  className="
-  mt-6
-  w-full
-  justify-start
-  gap-2
-  rounded-xl
-  bg-[#127173]
-  hover:bg-[#0f5c5d]
-  ">
-        <Plus className="h-4 w-4" />
-        New Chat
-      </Button>
+      <Link href="/assistant">
+  <Button
+    className="
+    mt-6
+    w-full
+    justify-start
+    gap-2
+    rounded-xl
+    bg-[#127173]
+    hover:bg-[#0f5c5d]
+    "
+  >
+    <Plus className="h-4 w-4" />
+    New Chat
+  </Button>
+</Link>
     </div>
 
-    <div className="px-4">
+    <div className="flex-1 overflow-y-auto px-4">
       <p className="mb-3 px-3 text-xs uppercase tracking-wider text-zinc-500">
         Workspace
       </p>
@@ -144,7 +149,7 @@ C </div>
     </div>
   </aside>
 
-  <div className="flex flex-1 flex-col">
+  <div className="flex flex-1 flex-col overflow-x-hidden">
     <header className="sticky top-0 z-20 border-b border-zinc-800 bg-black/80 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-6">
         <Search className="h-4 w-4 text-zinc-500" />
@@ -152,7 +157,7 @@ C </div>
       </div>
     </header>
 
-    <main className="flex-1 p-6">
+    <main className="flex-1 overflow-y-auto overflow-x-hidden p-6">
       {children}
     </main>
   </div>

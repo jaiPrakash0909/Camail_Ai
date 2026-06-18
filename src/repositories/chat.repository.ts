@@ -2,14 +2,18 @@ import { prisma } from "@/lib/prisma";
 
 export const chatRepository = {
   async recent(userId: string) {
-    return prisma.commandHistory.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 10,
-    });
+    const chats = await prisma.commandHistory.findMany({
+  where: { userId },
+  orderBy: { createdAt: "desc" },
+  take: 30,
+});
+
+return chats.filter(
+  (chat, index, self) =>
+    index ===
+    self.findIndex(
+      (c) => c.prompt === chat.prompt
+    )
+);
   },
 };
