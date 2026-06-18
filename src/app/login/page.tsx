@@ -90,8 +90,10 @@ export default async function LoginPage() {
             <ArrowRight className="h-4 w-4" />
           </button>
 </form>
+
           <button className="rounded-xl border border-zinc-800 bg-zinc-900 px-6 py-3 font-medium hover:bg-zinc-800 transition">
-            Watch Demo
+            <a href="https://www.youtube.com/watch?v=wsNu67nciGk">Watch Demo</a>
+            
           </button>
         </div>
 
