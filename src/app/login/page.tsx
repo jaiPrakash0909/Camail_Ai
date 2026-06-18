@@ -23,13 +23,13 @@ export default async function LoginPage() {
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
           <a href="#features" className="hover:text-white transition">
-            Features
+            
           </a>
           <a href="#about" className="hover:text-white transition">
-            About
+            
           </a>
           <a href="#contact" className="hover:text-white transition">
-            Contact
+            
           </a>
         </nav>
 
